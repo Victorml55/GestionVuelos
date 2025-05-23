@@ -21,12 +21,12 @@ public class HelloController {
     }
 
     @FXML
-    public void loadFlightsView() {
+    public void loadReservationsView() {
         loadView("reservations-Managment-view.fxml");
     }
 
     @FXML
-    public void loadReservationsView() {
+    public void loadFlightsView() {
         loadView("ReservationsView.fxml");
     }
 
