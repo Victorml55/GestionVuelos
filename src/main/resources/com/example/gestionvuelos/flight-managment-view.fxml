@@ -1,14 +1,50 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<?import java.lang.*?>
-<?import java.util.*?>
-<?import javafx.scene.*?>
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
 
+<?import java.lang.String?>
+<?import javafx.collections.FXCollections?>
 <AnchorPane xmlns="http://javafx.com/javafx"
             xmlns:fx="http://javafx.com/fxml"
             fx:controller="com.example.gestionvuelos.FlightManagmentController"
-            prefHeight="400.0" prefWidth="600.0">
+            prefHeight="600.0" prefWidth="800.0">
+
+    <!-- Tabla de vuelos -->
+    <TableView fx:id="tableVuelos" layoutX="20.0" layoutY="20.0" prefHeight="250.0" prefWidth="760.0">
+        <columns>
+            <TableColumn fx:id="colNumero" text="Número"/>
+            <TableColumn fx:id="colDestino" text="Destino"/>
+            <TableColumn fx:id="colFechaSalida" text="Fecha Salida"/>
+            <TableColumn fx:id="colFechaLlegada" text="Fecha Llegada"/>
+            <TableColumn fx:id="colEstado" text="Estado"/>
+        </columns>
+    </TableView>
+
+    <!-- Formulario de vuelo -->
+    <VBox layoutX="20.0" layoutY="290.0" spacing="10">
+        <TextField fx:id="txtNumero" promptText="Número de Vuelo"/>
+        <TextField fx:id="txtDestino" promptText="Destino"/>
+        <DatePicker fx:id="dpFechaSalida" promptText="Fecha de Salida"/>
+        <DatePicker fx:id="dpFechaLlegada" promptText="Fecha de Llegada"/>
+        <ComboBox fx:id="cmbEstado">
+            <items>
+                <FXCollections fx:factory="observableArrayList">
+                    <String fx:value="Programado"/>
+                    <String fx:value="Retrasado"/>
+                    <String fx:value="Cancelado"/>
+                    <String fx:value="Salido"/>
+                    <String fx:value="Llegado"/>
+                </FXCollections>
+            </items>
+        </ComboBox>
+    </VBox>
+
+    <!-- Botones de acción -->
+    <HBox layoutX="20.0" layoutY="460.0" spacing="10">
+        <Button fx:id="btnGuardar" text="Guardar"/>
+        <Button fx:id="btnModificar" text="Modificar"/>
+        <Button fx:id="btnEliminar" text="Eliminar"/>
+    </HBox>
 
 </AnchorPane>
