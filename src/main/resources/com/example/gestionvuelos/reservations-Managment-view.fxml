@@ -12,7 +12,7 @@
 <?import javafx.scene.layout.HBox?>
 
 <BorderPane xmlns:fx="http://javafx.com/fxml"
-            fx:controller="com.example.gestionvuelos.FlightController">
+            fx:controller="com.example.gestionvuelos.reservationsController">
 
     <!-- Flight selection panel on the left -->
     <left>

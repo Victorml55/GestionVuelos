@@ -8,8 +8,8 @@
     <!-- Top Navigation Bar -->
     <top>
         <HBox spacing="15" alignment="CENTER">
-            <Button text="Manage Flights" onAction="#loadFlightsView"/>
-            <Button text="Manage Reservations" onAction="#loadReservationsView"/>
+            <Button text="Reservations" onAction="#loadFlightsView"/>
+            <Button text="Flight management" onAction="#loadReservationsView"/>
             <Button text="Manage Customers" onAction="#loadCustomersView"/>
         </HBox>
     </top>
