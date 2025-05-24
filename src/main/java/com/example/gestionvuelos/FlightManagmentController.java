@@ -1,136 +1,141 @@
 package com.example.gestionvuelos;
 
+import com.example.gestionvuelos.database.VueloDAO;
+import com.example.gestionvuelos.models.Vuelo;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
-import java.sql.*;
-import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
 
-public class FlightManagementController {
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.SQLException;
 
-    @FXML private TableView<Flight> tableFlights;
-    @FXML private TableColumn<Flight, String> colNumber;
-    @FXML private TableColumn<Flight, String> colDestination;
-    @FXML private TableColumn<Flight, String> colDepartureDate;
-    @FXML private TableColumn<Flight, String> colArrivalDate;
-    @FXML private TableColumn<Flight, String> colStatus;
+public class FlightManagmentController {
 
-    @FXML private TextField txtNumber;
-    @FXML private TextField txtDestination;
-    @FXML private DatePicker dpDepartureDate;
-    @FXML private DatePicker dpArrivalDate;
-    @FXML private ComboBox<String> cmbStatus;
-    @FXML private Button btnSave;
-    @FXML private Button btnUpdate;
-    @FXML private Button btnDelete;
+    @FXML private TableView<Vuelo> tableVuelos;
+    @FXML private TableColumn<Vuelo, String> colNumero;
+    @FXML private TableColumn<Vuelo, String> colDestino;
+    @FXML private TableColumn<Vuelo, String> colFechaSalida;
+    @FXML private TableColumn<Vuelo, String> colFechaLlegada;
+    @FXML private TableColumn<Vuelo, String> colEstado;
+
+    @FXML private TextField txtNumero;
+    @FXML private TextField txtDestino;
+    @FXML private DatePicker dpFechaSalida;
+    @FXML private DatePicker dpFechaLlegada;
+    @FXML private ComboBox<String> cmbEstado;
+    @FXML private Button btnGuardar;
+    @FXML private Button btnModificar;
+    @FXML private Button btnEliminar;
 
     private Connection connection;
-    private ObservableList<Flight> flightList = FXCollections.observableArrayList();
+    private VueloDAO vueloDAO;
+    private ObservableList<Vuelo> vuelosList = FXCollections.observableArrayList();
 
     @FXML
     public void initialize() {
-        connectDatabase();
-        setupTable();
-        loadFlights();
-        cmbStatus.setItems(FXCollections.observableArrayList("Scheduled", "Delayed", "Canceled", "Departed", "Arrived"));
+        conectarBaseDatos();
+        vueloDAO = new VueloDAO(connection);
+        configurarTabla();
+        cargarVuelos();
 
-        tableFlights.getSelectionModel().selectedItemProperty().addListener((obs, oldSelection, newSelection) -> {
-            if (newSelection != null) loadForm(newSelection);
+        cmbEstado.setItems(FXCollections.observableArrayList("programado", "retrasado", "cancelado", "salido", "llegado"));
+
+        tableVuelos.getSelectionModel().selectedItemProperty().addListener((obs, oldSelection, newSelection) -> {
+            if (newSelection != null) cargarFormulario(newSelection);
         });
     }
 
-    private void connectDatabase() {
+    private void conectarBaseDatos() {
         try {
-            connection = DriverManager.getConnection("jdbc:mysql://localhost/airline", "root", "password");
+            connection = DriverManager.getConnection("jdbc:mysql://localhost/aerolinea", "root", "password");
         } catch (SQLException e) {
-            showAlert("Connection Error", "Could not connect to the database.");
+            mostrarAlerta("Error de conexión", "No se pudo conectar a la base de datos.");
         }
     }
 
-    private void setupTable() {
-        colNumber.setCellValueFactory(cellData -> cellData.getValue().numberProperty());
-        colDestination.setCellValueFactory(cellData -> cellData.getValue().destinationProperty());
-        colDepartureDate.setCellValueFactory(cellData -> cellData.getValue().departureDateProperty());
-        colArrivalDate.setCellValueFactory(cellData -> cellData.getValue().arrivalDateProperty());
-        colStatus.setCellValueFactory(cellData -> cellData.getValue().statusProperty());
+    private void configurarTabla() {
+        colNumero.setCellValueFactory(cellData -> cellData.getValue().numeroProperty());
+        colDestino.setCellValueFactory(cellData -> cellData.getValue().destinoProperty());
+        colFechaSalida.setCellValueFactory(cellData -> cellData.getValue().fecha_salidaProperty().asString());
+        colFechaLlegada.setCellValueFactory(cellData -> cellData.getValue().fecha_llegadaProperty().asString());
+        colEstado.setCellValueFactory(cellData -> cellData.getValue().estadoProperty());
 
-        tableFlights.setItems(flightList);
+        tableVuelos.setItems(vuelosList);
     }
 
-    private void loadFlights() {
-        flightList.clear();
-        String query = "SELECT number, destination, departure_date, arrival_date, status FROM flight";
-        try (Statement stmt = connection.createStatement(); ResultSet rs = stmt.executeQuery(query)) {
-            while (rs.next()) {
-                flightList.add(new Flight(
-                        rs.getString("number"),
-                        rs.getString("destination"),
-                        rs.getTimestamp("departure_date").toLocalDateTime().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")),
-                        rs.getTimestamp("arrival_date").toLocalDateTime().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")),
-                        rs.getString("status")
-                ));
-            }
-        } catch (SQLException e) {
-            showAlert("Error", "Could not load flights.");
+    private void cargarVuelos() {
+        vuelosList.clear();
+        vuelosList.addAll(vueloDAO.obtenerTodosLosVuelos());
+    }
+
+    private void guardarVuelo() {
+        Vuelo vuelo = new Vuelo(
+                0,
+                txtNumero.getText(),
+                txtDestino.getText(),
+                dpFechaSalida.getValue().atStartOfDay(),
+                dpFechaLlegada.getValue().atStartOfDay(),
+                cmbEstado.getValue(),
+                1, // ID aeronave (modificar según lógica de selección)
+                1  // ID aeropuerto (modificar según lógica de selección)
+        );
+
+        if (vueloDAO.agregarVuelo(vuelo)) {
+            cargarVuelos();
+        } else {
+            mostrarAlerta("Error", "No se pudo guardar el vuelo.");
         }
     }
 
-    private void saveFlight() {
-        String query = "INSERT INTO flight (number, destination, departure_date, arrival_date, status) VALUES (?, ?, ?, ?, ?)";
-        try (PreparedStatement stmt = connection.prepareStatement(query)) {
-            stmt.setString(1, txtNumber.getText());
-            stmt.setString(2, txtDestination.getText());
-            stmt.setTimestamp(3, Timestamp.valueOf(dpDepartureDate.getValue().atStartOfDay()));
-            stmt.setTimestamp(4, Timestamp.valueOf(dpArrivalDate.getValue().atStartOfDay()));
-            stmt.setString(5, cmbStatus.getValue());
-            stmt.executeUpdate();
-            loadFlights();
-        } catch (SQLException e) {
-            showAlert("Error", "Could not save flight.");
+    private void modificarVuelo() {
+        Vuelo vuelo = tableVuelos.getSelectionModel().getSelectedItem();
+        if (vuelo == null) {
+            mostrarAlerta("Advertencia", "Selecciona un vuelo para modificar.");
+            return;
+        }
+
+        vuelo.setNumero(txtNumero.getText());
+        vuelo.setDestino(txtDestino.getText());
+        vuelo.setFecha_salida(dpFechaSalida.getValue().atStartOfDay());
+        vuelo.setFecha_llegada(dpFechaLlegada.getValue().atStartOfDay());
+        vuelo.setEstado(cmbEstado.getValue());
+
+        if (vueloDAO.actualizarVuelo(vuelo)) {
+            cargarVuelos();
+        } else {
+            mostrarAlerta("Error", "No se pudo modificar el vuelo.");
         }
     }
 
-    private void updateFlight() {
-        String query = "UPDATE flight SET destination=?, departure_date=?, arrival_date=?, status=? WHERE number=?";
-        try (PreparedStatement stmt = connection.prepareStatement(query)) {
-            stmt.setString(1, txtDestination.getText());
-            stmt.setTimestamp(2, Timestamp.valueOf(dpDepartureDate.getValue().atStartOfDay()));
-            stmt.setTimestamp(3, Timestamp.valueOf(dpArrivalDate.getValue().atStartOfDay()));
-            stmt.setString(4, cmbStatus.getValue());
-            stmt.setString(5, txtNumber.getText());
-            stmt.executeUpdate();
-            loadFlights();
-        } catch (SQLException e) {
-            showAlert("Error", "Could not update flight.");
+    private void eliminarVuelo() {
+        Vuelo vuelo = tableVuelos.getSelectionModel().getSelectedItem();
+        if (vuelo == null) {
+            mostrarAlerta("Advertencia", "Selecciona un vuelo para eliminar.");
+            return;
+        }
+
+        if (vueloDAO.eliminarVuelo(vuelo.getId_vuelo())) {
+            cargarVuelos();
+        } else {
+            mostrarAlerta("Error", "No se pudo eliminar el vuelo.");
         }
     }
 
-    private void deleteFlight() {
-        String query = "DELETE FROM flight WHERE number=?";
-        try (PreparedStatement stmt = connection.prepareStatement(query)) {
-            stmt.setString(1, txtNumber.getText());
-            stmt.executeUpdate();
-            loadFlights();
-        } catch (SQLException e) {
-            showAlert("Error", "Could not delete flight.");
-        }
+    private void cargarFormulario(Vuelo vuelo) {
+        txtNumero.setText(vuelo.getNumero());
+        txtDestino.setText(vuelo.getDestino());
+        dpFechaSalida.setValue(vuelo.getFecha_salida().toLocalDate());
+        dpFechaLlegada.setValue(vuelo.getFecha_llegada().toLocalDate());
+        cmbEstado.setValue(vuelo.getEstado());
     }
 
-    private void loadForm(Flight flight) {
-        txtNumber.setText(flight.getNumber());
-        txtDestination.setText(flight.getDestination());
-        dpDepartureDate.setValue(LocalDate.parse(flight.getDepartureDate().split(" ")[0]));
-        dpArrivalDate.setValue(LocalDate.parse(flight.getArrivalDate().split(" ")[0]));
-        cmbStatus.setValue(flight.getStatus());
-    }
-
-    private void showAlert(String title, String message) {
+    private void mostrarAlerta(String titulo, String mensaje) {
         Alert alert = new Alert(Alert.AlertType.ERROR);
-        alert.setTitle(title);
+        alert.setTitle(titulo);
         alert.setHeaderText(null);
-        alert.setContentText(message);
+        alert.setContentText(mensaje);
         alert.showAndWait();
     }
 }

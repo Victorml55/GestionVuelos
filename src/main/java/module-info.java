@@ -7,4 +7,6 @@ module com.example.gestionvuelos {
 
     opens com.example.gestionvuelos to javafx.fxml;
     exports com.example.gestionvuelos;
+    exports com.example.gestionvuelos.models;
+    exports com.example.gestionvuelos.database;
 }
