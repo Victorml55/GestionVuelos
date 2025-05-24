@@ -5,7 +5,7 @@ import java.sql.DriverManager;
 import java.sql.SQLException;
 
 public class MySQLConnection {
-    private static final String URL = "jdbc:mysql://localhost:3306/aerolinea";
+    private static final String URL = "jdbc:mysql://localhost:3306/aerolinea?serverTimezone=UTC";
     private static final String USER = "root";
     private static final String PASSWORD = "Lamamiesjuan1";
 
