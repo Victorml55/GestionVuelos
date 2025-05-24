@@ -27,7 +27,7 @@ public class HelloController {
 
     @FXML
     public void loadFlightsView() {
-        loadView("ReservationsView.fxml");
+        loadView("flight-managment-view.fxml");
     }
 
     @FXML
